@@ -60,9 +60,92 @@ fragment <<EOF
   link_info.default_execstack = DEFAULT_LD_EXECSTACK;
 }
 
+static struct bfd_link_needed_list *force_needed_top;
+
+static bool
+_bfd_elf_link_create_dynstrtab (bfd *abfd, struct bfd_link_info *info)
+{
+  struct elf_link_hash_table *hash_table;
+
+  hash_table = elf_hash_table (info);
+  if (hash_table->dynobj == NULL)
+    hash_table->dynobj = abfd;
+
+  if (hash_table->dynstr == NULL)
+    {
+      hash_table->dynstr = _bfd_elf_strtab_init ();
+      if (hash_table->dynstr == NULL)
+	return false;
+    }
+  return true;
+}
+
+static void
+elf_add_dt_needed_tag (bfd *abfd,
+		       struct bfd_link_info *info,
+		       const char *soname,
+		       bool do_it)
+{
+  struct elf_link_hash_table *hash_table;
+  bfd_size_type oldsize;
+  bfd_size_type strindex;
+
+  if (!_bfd_elf_link_create_dynstrtab (abfd, info))
+    return;
+
+  hash_table = elf_hash_table (info);
+  oldsize = _bfd_elf_strtab_size (hash_table->dynstr);
+  strindex = _bfd_elf_strtab_add (hash_table->dynstr, soname, false);
+  if (strindex == (bfd_size_type) -1)
+    return;
+
+  if (oldsize == _bfd_elf_strtab_size (hash_table->dynstr))
+    {
+      asection *sdyn;
+      const struct elf_backend_data *bed;
+      bfd_byte *extdyn;
+
+      bed = get_elf_backend_data (hash_table->dynobj);
+      sdyn = bfd_get_section_by_name (hash_table->dynobj, ".dynamic");
+      if (sdyn != NULL)
+	for (extdyn = sdyn->contents;
+	     extdyn < sdyn->contents + sdyn->size;
+	     extdyn += bed->s->sizeof_dyn)
+	  {
+	    Elf_Internal_Dyn dyn;
+
+	    bed->s->swap_dyn_in (hash_table->dynobj, extdyn, &dyn);
+	    if (dyn.d_tag == DT_NEEDED
+		&& dyn.d_un.d_val == strindex)
+	      {
+		_bfd_elf_strtab_delref (hash_table->dynstr, strindex);
+		return;
+	      }
+	  }
+    }
+
+  if (do_it)
+    {
+      if (!_bfd_elf_link_create_dynamic_sections (hash_table->dynobj, info))
+	return;
+
+      if (!_bfd_elf_add_dynamic_entry (info, DT_NEEDED, strindex))
+	return;
+    }
+  else
+    /* We were just checking for existence of the tag.  */
+    _bfd_elf_strtab_delref (hash_table->dynstr, strindex);
+
+  return;
+}
 static void
 aarch64_elf_before_allocation (void)
 {
+  struct bfd_link_needed_list *entry = force_needed_top;
+  while (entry) {
+    elf_add_dt_needed_tag (link_info.output_bfd, &link_info, entry->name, true);
+    entry = entry->next;
+  }
   /* We should be able to set the size of the interworking stub section.  We
      can't do it until later if we have dynamic sections, though.  */
   if (! elf_hash_table (&link_info)->dynamic_sections_created)
@@ -363,6 +446,7 @@ PARSE_AND_LIST_PROLOGUE='
 #define OPTION_FIX_ERRATUM_835769	313
 #define OPTION_FIX_ERRATUM_843419	314
 #define OPTION_NO_APPLY_DYNAMIC_RELOCS	315
+#define OPTION_FORCE_ADD_NEEDED	316
 '
 
 PARSE_AND_LIST_SHORTOPTS=p
@@ -376,6 +460,7 @@ PARSE_AND_LIST_LONGOPTS='
   { "fix-cortex-a53-835769", no_argument, NULL, OPTION_FIX_ERRATUM_835769},
   { "fix-cortex-a53-843419", optional_argument, NULL, OPTION_FIX_ERRATUM_843419},
   { "no-apply-dynamic-relocs", no_argument, NULL, OPTION_NO_APPLY_DYNAMIC_RELOCS},
+  { "force-add-needed", required_argument, NULL, OPTION_FORCE_ADD_NEEDED },
 '
 
 PARSE_AND_LIST_OPTIONS='
@@ -408,6 +493,7 @@ PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("  --no-apply-dynamic-relocs    Do not apply link-time values for dynamic relocations\n"));
   fprintf (file, _("  -z force-bti                  Turn on Branch Target Identification mechanism and generate PLTs with BTI. Generate warnings for missing BTI on inputs\n"));
   fprintf (file, _("  -z pac-plt                    Protect PLTs with Pointer Authentication.\n"));
+  fprintf (file, _("  --force-add-needed=<dso>     Force add needed\n"));
 '
 
 PARSE_AND_LIST_ARGS_CASE_Z_AARCH64='
@@ -460,6 +546,25 @@ PARSE_AND_LIST_ARGS_CASES='
 
     case OPTION_NO_APPLY_DYNAMIC_RELOCS:
       no_apply_dynamic_relocs = 1;
+      break;
+
+    case OPTION_FORCE_ADD_NEEDED:
+      {
+        struct bfd_link_needed_list *new_entry = xmalloc (sizeof (struct bfd_link_needed_list));
+	if (new_entry) {
+		new_entry->name = strdup(optarg);
+		new_entry->by = 0;
+		new_entry->next = 0;
+		struct bfd_link_needed_list *entry = force_needed_top;;
+		if (entry) {
+			while (entry->next)
+				entry = entry->next;
+			entry->next = new_entry;
+		} else {
+			force_needed_top = new_entry;
+		}
+	}
+      }
       break;
 
     case OPTION_STUBGROUP_SIZE:

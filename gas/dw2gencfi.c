@@ -240,7 +240,7 @@ get_debugseg_name (segT seg, const char *base_name)
       || (name = bfd_section_name (seg)) == NULL
       || *name == 0)
     return notes_strdup (base_name);
-	
+
   dollar = strchr (name, '$');
   dot = strchr (name + 1, '.');
 

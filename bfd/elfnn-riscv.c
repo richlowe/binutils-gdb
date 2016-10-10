@@ -4658,7 +4658,7 @@ _bfd_riscv_relax_lui (bfd *abfd,
     }
 
   /* Can we relax LUI to C.LUI?  Alignment might move the section forward;
-     account for this assuming page alignment at worst. In the presence of 
+     account for this assuming page alignment at worst. In the presence of
      RELRO segment the linker aligns it by one page size, therefore sections
      after the segment can be moved more than one page. */
 

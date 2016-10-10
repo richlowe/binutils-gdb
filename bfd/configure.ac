@@ -796,6 +796,9 @@ CORE_HEADER=
 TRAD_HEADER=
 if test "${target}" = "${host}"; then
   case "${host}" in
+  aarch64*-*-solaris*)
+	COREFILE=''
+	;;
   alpha*-*-freebsd* | alpha*-*-kfreebsd*-gnu | alpha*-*-*vms*)
 	COREFILE=''
 	;;
