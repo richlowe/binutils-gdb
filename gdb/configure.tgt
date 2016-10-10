@@ -144,6 +144,12 @@ aarch64*-*-linux*)
 			symfile-mem.o linux-record.o"
 	;;
 
+aarch64*-*-solaris2.1[0-9]*)
+	# Target: AArch64 Solaris
+	gdb_target_obs="aarch64-tdep.o aarch64-sol2-tdep.o arch/aarch64-insn.o arch/aarch64.o \
+			sol2-tdep.o solib-svr4.o ravenscar-thread.o aarch64-ravenscar-thread.o"
+	;;
+
 alpha*-*-linux*)
 	# Target: Little-endian Alpha running Linux
 	gdb_target_obs="alpha-mdebug-tdep.o alpha-linux-tdep.o \
@@ -533,6 +539,12 @@ riscv*-*-linux*)
 	# Target: Linux/RISC-V
 	gdb_target_obs="riscv-linux-tdep.o glibc-tdep.o \
  			linux-tdep.o solib-svr4.o symfile-mem.o linux-record.o"
+	;;
+
+riscv*-*-solaris2.1[0-9]*)
+	# Target: RISC-V Solaris
+	gdb_target_obs="riscv-sol2-tdep.o \
+			sol2-tdep.o solib-svr4.o"
 	;;
 
 riscv*-*-*)

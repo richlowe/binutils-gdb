@@ -444,6 +444,8 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 <SCRIPT,EXPRESSION,WILD,VERS_START,VERS_NODE,VERS_SCRIPT>#.* {
 				/* Eat up comments */ }
 
+<VERS_START,VERS_SCRIPT>$mapfile_version.*	{ /* Eat up comments */ }
+
 <VERS_NODE,VERS_SCRIPT>[:,;]	{ return *yytext; }
 
 <VERS_NODE>global		{ RTOKEN(GLOBAL); }
@@ -454,6 +456,10 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 
 <VERS_NODE>{V_IDENTIFIER}	{ yylval.name = xstrdup (yytext);
 				  return VERS_IDENTIFIER; }
+
+<VERS_SCRIPT>SYMBOL_VERSION	{ RTOKEN(SYMBOL_VERSION); }
+
+<VERS_SCRIPT>SYMBOL_SCOPE	{ RTOKEN(SYMBOL_SCOPE); }
 
 <VERS_SCRIPT>{V_TAG}		{ yylval.name = xstrdup (yytext);
 				  return VERS_TAG; }

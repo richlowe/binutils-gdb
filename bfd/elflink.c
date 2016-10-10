@@ -6954,6 +6954,11 @@ bfd_elf_size_dynamic_sections (bfd *output_bfd,
 
 	      for (n = t->deps; n != NULL; n = n->next)
 		{
+		  if (n->version_needed_name) {
+			info->callbacks->einfo(_("%Xversion `%s' is not found\n"),
+			     n->version_needed_name);
+		  }
+		  BFD_ASSERT (n->version_needed_name == NULL);
 		  if (n->version_needed == NULL)
 		    {
 		      /* This can happen if there was an error in the
@@ -7321,7 +7326,11 @@ NOTE: This behaviour is deprecated and will be removed in a future version of th
 	  if (!_bfd_elf_add_dynamic_entry (info, DT_FINI, 0))
 	    return false;
 	}
-
+      if (info->rtldinfo)
+      {
+	  if (!_bfd_elf_add_dynamic_entry (info, DT_SUNW_RTLDINF, 0))
+	    return false;
+      }
       s = bfd_get_section_by_name (output_bfd, ".preinit_array");
       if (s != NULL && s->linker_has_input)
 	{
@@ -13182,7 +13191,9 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
 		  relr_entsize = 0;
 		}
 	      continue;
-
+	    case DT_SUNW_RTLDINF:
+	      name = info->rtldinfo_name;
+	      goto get_sym;
 	    case DT_INIT:
 	      name = info->init_function;
 	      goto get_sym;

@@ -154,7 +154,7 @@ static int error_index;
 %token LOG2CEIL FORMAT PUBLIC DEFSYMEND BASE ALIAS TRUNCATE REL
 %token INPUT_SCRIPT INPUT_MRI_SCRIPT INPUT_DEFSYM CASE EXTERN START
 %token <name> VERS_TAG VERS_IDENTIFIER
-%token GLOBAL LOCAL VERSIONK INPUT_VERSION_SCRIPT
+%token GLOBAL LOCAL VERSIONK INPUT_VERSION_SCRIPT SYMBOL_VERSION SYMBOL_SCOPE
 %token KEEP ONLY_IF_RO ONLY_IF_RW SPECIAL INPUT_SECTION_FLAGS ALIGN_WITH_INPUT
 %token EXCLUDE_FILE
 %token CONSTANT
@@ -1380,6 +1380,18 @@ vers_node:
 		'{' vers_tag '}' ';'
 		{
 		  lang_register_vers_node (NULL, $2, NULL);
+		}
+	|	SYMBOL_SCOPE '{' vers_tag '}' ';'
+		{
+		  lang_register_vers_node (NULL, $3, NULL);
+		}
+	|	SYMBOL_VERSION VERS_TAG '{' vers_tag '}' ';'
+		{
+		  lang_register_vers_node ($2, $4, NULL);
+		}
+	|	SYMBOL_VERSION VERS_TAG '{' vers_tag '}' verdep ';'
+		{
+		  lang_register_vers_node ($2, $4, $6);
 		}
 	|	VERS_TAG '{' vers_tag '}' ';'
 		{

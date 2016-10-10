@@ -9989,6 +9989,59 @@ const struct elf_size_info elfNN_aarch64_size_info =
   bfd_elfNN_swap_reloca_out
 };
 
+static int
+elfNN_aarch64_additional_program_headers (bfd *abfd,
+				       struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+  asection *s;
+  int count = 0;
+
+  /* Check to see if we need a large readonly segment.  */
+  s = bfd_get_section_by_name (abfd, ".dtrace_data");
+  if (s && (s->flags & SEC_LOAD))
+    count++;
+
+  return count;
+}
+
+#define	PT_SUNWDTRACE	0x6ffffffc
+static bool
+elfNN_aarch64_modify_segment_map (bfd *abfd,
+    struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+	struct elf_segment_map *m;
+	asection *sec;
+
+	sec = bfd_get_section_by_name (abfd, ".dtrace_data");
+	if (sec != NULL && (sec->flags & SEC_LOAD) != 0)
+	{
+		m = elf_seg_map (abfd);
+		while (m && m->p_type != PT_SUNWDTRACE)
+			m = m->next;
+
+		if (!m)
+		{
+			m = (struct elf_segment_map *) bfd_zalloc(abfd, sizeof (struct elf_segment_map));
+			if (m == NULL)
+				return false;
+			m->p_type = PT_SUNWDTRACE;
+			m->count = 1;
+			m->sections[0] = sec;
+			m->next = elf_seg_map (abfd);
+			elf_seg_map (abfd) = m;
+		}
+	}
+
+	return true;
+}
+
+static const struct bfd_elf_special_section
+  elfNN_aarch64_special_sections[]=
+{
+  { STRING_COMMA_LEN (".dtrace_data"),	    0, SHT_PROGBITS, SHF_ALLOC + SHF_WRITE + SHF_EXECINSTR},
+  { NULL,	                0,          0, 0,            0 }
+};
+
 #define ELF_ARCH			bfd_arch_aarch64
 #define ELF_MACHINE_CODE		EM_AARCH64
 #define ELF_MAXPAGESIZE			0x10000
@@ -10103,6 +10156,15 @@ const struct elf_size_info elfNN_aarch64_size_info =
 
 #define elf_backend_merge_gnu_properties	\
   elfNN_aarch64_merge_gnu_properties
+
+#define elf_backend_special_sections		\
+  elfNN_aarch64_special_sections
+
+#define elf_backend_modify_segment_map		\
+  elfNN_aarch64_modify_segment_map
+
+#define elf_backend_additional_program_headers	\
+  elfNN_aarch64_additional_program_headers
 
 #define elf_backend_can_refcount       1
 #define elf_backend_can_gc_sections    1

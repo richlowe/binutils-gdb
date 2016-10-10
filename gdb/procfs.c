@@ -2155,7 +2155,7 @@ wait_again:
 		      }
 		    else
 		      {
-			int temp = ::wait (&wstat);
+			int temp = ::waitpid(pi->pid, &wstat, 0);
 
 			/* FIXME: shouldn't I make sure I get the right
 			   event from the right process?  If (for

@@ -257,7 +257,7 @@ get_debugseg_name (segT seg, const char *base_name)
   else
     name = dollar;
 
-  return concat (base_name, name, NULL);
+  return concat (base_name, name, (void *)0);
 }
 
 /* Allocate a dwcfi_seg_list structure.  */

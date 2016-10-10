@@ -80,6 +80,8 @@ fi
 # Please try to keep this table more or less in alphabetic order - it
 # makes it much easier to lookup a specific archictecture.
 case "${targ}" in
+aarch64-*-solaris2*)	targ_emul=aarch64elf
+			targ_extra_emuls="aarch64elf32 aarch64elf32b aarch64elfb armelf armelfb" ;;
 aarch64_be-*-elf)	targ_emul=aarch64elfb
 			targ_extra_emuls="aarch64elf aarch64elf32 aarch64elf32b armelfb armelf"
 			;;
@@ -811,6 +813,7 @@ riscv64be*-*-linux*)	targ_emul=elf64briscv
 			targ_extra_emuls="elf64briscv_lp64f elf64briscv_lp64 elf32briscv elf32briscv_ilp32f elf32briscv_ilp32 elf64lriscv elf64lriscv_lp64f elf64lriscv_lp64 elf32lriscv elf32lriscv_ilp32f elf32lriscv_ilp32"
 			targ_extra_libpath=$targ_extra_emuls
 			;;
+riscv64-*-solaris2*)	targ_emul=elf64lriscv ;;
 riscv64*-*-linux*)	targ_emul=elf64lriscv
 			targ_extra_emuls="elf64lriscv_lp64f elf64lriscv_lp64 elf32lriscv elf32lriscv_ilp32f elf32lriscv_ilp32 elf64briscv elf64briscv_lp64f elf64briscv_lp64 elf32briscv elf32briscv_ilp32f elf32briscv_ilp32"
 			targ_extra_libpath=$targ_extra_emuls

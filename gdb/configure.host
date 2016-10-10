@@ -81,6 +81,7 @@ case "${host}" in
 
 aarch64*-*-linux*)	gdb_host=linux ;;
 aarch64*-*-freebsd*)	gdb_host=fbsd ;;
+aarch64*-*-solaris2.1[0-9]*)	gdb_host=sol2 ;;
 
 alpha*-*-linux*)	gdb_host=alpha-linux ;;
 alpha*-*-netbsdaout* | alpha*-*-knetbsdaout*-gnu)
@@ -147,6 +148,7 @@ powerpc*-*-linux*)	gdb_host=linux ;;
 
 riscv*-*-freebsd*)	gdb_host=fbsd ;;
 riscv*-*-linux*)	gdb_host=linux ;;
+riscv*-*-solaris2.1[0-9]*)	gdb_host=sol2 ;;
 
 s390*-*-linux*)		gdb_host=linux ;;
 

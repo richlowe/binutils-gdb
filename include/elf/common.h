@@ -1176,6 +1176,8 @@
 #define DT_VERNEED	0x6ffffffe
 #define DT_VERNEEDNUM	0x6fffffff
 
+#define DT_SUNW_RTLDINF	0x6000000e
+
 /* This tag is a GNU extension to the Solaris version scheme.  */
 #define DT_VERSYM	0x6ffffff0
 

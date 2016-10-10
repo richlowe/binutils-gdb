@@ -12,16 +12,19 @@ NO_REL_RELOCS=yes
 TEMPLATE_NAME=elf
 EXTRA_EM_FILE=aarch64elf
 
+# SEPARATE_CODE=yes
+
 GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes
 
 MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
+COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
 
 ENTRY=_start
 EMBEDDED=yes
 SEPARATE_GOTPLT=24
 IREL_IN_PLT=
-TEXT_START_ADDR=0x00400000
+TEXT_START_ADDR="0x00400000 + SIZEOF_HEADERS"
 
 DATA_START_SYMBOLS="${CREATE_SHLIB+PROVIDE (}__data_start = .${CREATE_SHLIB+)};"
 
@@ -34,6 +37,7 @@ OTHER_END_SYMBOLS="${CREATE_SHLIB+PROVIDE (}__end__ = .${CREATE_SHLIB+)};"
 
 OTHER_SECTIONS='.note.gnu.arm.ident 0 : { KEEP (*(.note.gnu.arm.ident)) }'
 ATTRS_SECTIONS='.ARM.attributes 0 : { KEEP (*(.ARM.attributes)) KEEP (*(.gnu.attributes)) }'
+PLT=".plt          ${RELOCATING-0} : ALIGN(16) { *(.plt)${IREL_IN_PLT+ *(.iplt)} }"
 
 # This sets the stack to the top of the simulator memory (2^19 bytes).
 STACK_ADDR=0x80000

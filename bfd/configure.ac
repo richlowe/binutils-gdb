@@ -801,6 +801,9 @@ CORE_HEADER=
 TRAD_HEADER=
 if test "${target}" = "${host}"; then
   case "${host}" in
+  aarch64*-*-solaris*)
+	COREFILE=''
+	;;
   alpha*-*-freebsd* | alpha*-*-kfreebsd*-gnu | alpha*-*-*vms*)
 	COREFILE=''
 	;;
@@ -920,6 +923,9 @@ changequote([,])dnl
 	;;
   ns32k-*-netbsd* | ns32k-*-openbsd*)
 	COREFILE=netbsd-core.lo
+	;;
+  riscv64-*-solaris*)
+	COREFILE=''
 	;;
   rs6000-*-lynx*)
 	COREFILE=lynx-core.lo

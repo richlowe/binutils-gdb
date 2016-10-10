@@ -127,6 +127,8 @@ _GL_EXTERN_C void __cdecl free (void *);
 #  else
 #   if defined __cplusplus && (__GLIBC__ + (__GLIBC_MINOR__ >= 14) > 2)
 _GL_EXTERN_C void free (void *) throw ();
+#   elif defined __cplusplus && defined __sun__ && defined __GNUC__
+_GL_EXTERN_C void std::free (void *);
 #   else
 _GL_EXTERN_C void free (void *);
 #   endif
@@ -138,6 +140,8 @@ _GL_EXTERN_C void __cdecl free (void *);
 # else
 #  if defined __cplusplus && (__GLIBC__ + (__GLIBC_MINOR__ >= 14) > 2)
 _GL_EXTERN_C void free (void *) throw ();
+#  elif defined __cplusplus && defined __sun__ && defined __GNUC__
+_GL_EXTERN_C void std::free (void *);
 #  else
 _GL_EXTERN_C void free (void *);
 #  endif

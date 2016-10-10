@@ -9465,9 +9465,41 @@ lang_register_vers_node (const char *name,
   else
     version->vernum = 0;
 
+  int vernum = version->vernum;
+  for (t = link_info.version_info; t != NULL; t = t->next) {
+	  struct bfd_elf_version_deps *ver_deps = t->deps;
+	  while (ver_deps) {
+		  if (ver_deps->version_needed_name &&
+		      strcmp (ver_deps->version_needed_name, name) == 0) {
+			  ver_deps->version_needed = version;
+			  free(ver_deps->version_needed_name);
+			  ver_deps->version_needed_name = NULL;
+			  if (t->vernum < vernum)
+				  vernum = t->vernum;
+		  }
+		  ver_deps = ver_deps->next;
+	  }
+  }
+
   for (pp = &link_info.version_info; *pp != NULL; pp = &(*pp)->next)
-    ;
+	  ;
   *pp = version;
+
+  while (vernum != version->vernum) {
+	  for (pp = &link_info.version_info; *pp != NULL; pp = &(*pp)->next) {
+		  if ((*pp)->next == version) {
+			  t = *pp;
+			  int v = t->vernum;
+			  t->vernum = version->vernum;
+			  version->vernum = v;
+
+			  t->next = version->next;
+			  version->next = t;
+			  *pp = version;
+			  break;
+		  }
+	  }
+  }
 }
 
 /* This is called when we see a version dependency.  */
@@ -9480,6 +9512,7 @@ lang_add_vers_depend (struct bfd_elf_version_deps *list, const char *name)
 
   ret = (struct bfd_elf_version_deps *) xmalloc (sizeof *ret);
   ret->next = list;
+  ret->version_needed_name = NULL;
 
   for (t = link_info.version_info; t != NULL; t = t->next)
     {
@@ -9490,9 +9523,10 @@ lang_add_vers_depend (struct bfd_elf_version_deps *list, const char *name)
 	}
     }
 
-  einfo (_("%X%P: unable to find version dependency `%s'\n"), name);
+//  einfo (_("%X%P: unable to find version dependency `%s'\n"), name);
 
   ret->version_needed = NULL;
+  ret->version_needed_name = strdup(name);
   return ret;
 }
 
