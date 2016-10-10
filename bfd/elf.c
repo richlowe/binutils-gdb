@@ -11985,6 +11985,9 @@ elfcore_grok_solaris_note_impl (bfd *abfd, Elf_Internal_Note *note)
 	case 824: /* sizeof(prstatus_t) Intel 64-bit */
 	  return elfcore_grok_solaris_prstatus(abfd, note,
 					       264, 360, 520, 224, 600);
+	case 888: /* sizeof(prstatus_t) AArch64 */
+		return elfcore_grok_solaris_prstatus(abfd, note,
+		    264, 360, 520, 288, 600);
 	default:
 	  return true;
 	}
@@ -11995,7 +11998,7 @@ elfcore_grok_solaris_note_impl (bfd *abfd, Elf_Internal_Note *note)
 	{
 	case 260: /* sizeof(prpsinfo_t) SPARC and Intel 32-bit */
 	  return elfcore_grok_solaris_info(abfd, note, 84, 100);
-	case 328: /* sizeof(prpsinfo_t) SPARC and Intel 64-bit */
+	case 328: /* sizeof(prpsinfo_t) SPARC and Intel 64-bit and AArch64 */
 	  return elfcore_grok_solaris_info(abfd, note, 120, 136);
 	case 360: /* sizeof(psinfo_t) SPARC and Intel 32-bit */
 	  return elfcore_grok_solaris_info(abfd, note, 88, 104);
@@ -12020,6 +12023,12 @@ elfcore_grok_solaris_note_impl (bfd *abfd, Elf_Internal_Note *note)
 	case 1296: /* sizeof(lwpstatus_t) Intel 64-bit */
 	  return elfcore_grok_solaris_lwpstatus(abfd, note,
 						224, 544, 528, 768);
+	case 1360: /* sizeof(lwpstatus_t) AArch64 */
+	  return elfcore_grok_solaris_lwpstatus(abfd, note,
+	      288,
+	      544,
+	      528,
+	      832);
 	default:
 	  return true;
 	}
