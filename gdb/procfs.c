@@ -341,7 +341,7 @@ typedef siginfo_t gdb_siginfo_t;
 #  define AS_PROC_NAME_FMT     "/proc/%d/as"
 #  define MAP_PROC_NAME_FMT    "/proc/%d/map"
 #  define STATUS_PROC_NAME_FMT "/proc/%d/status"
-#  define MAX_PROC_NAME_SIZE sizeof("/proc/99999/lwp/8096/lstatus")
+#  define MAX_PROC_NAME_SIZE sizeof("/proc/0123456789/lwp/0123456789/lwpstatus")
 # endif
 /* the name of the proc status struct depends on the implementation */
 typedef pstatus_t   gdb_prstatus_t;
@@ -712,7 +712,7 @@ create_procinfo (int pid, int tid)
   else
     {
 #ifdef NEW_PROC_API
-      sprintf (pi->pathname, "/proc/%05d/lwp/%d", pid, tid);
+      sprintf (pi->pathname, "/proc/%d/lwp/%d", pid, tid);
 #else
       sprintf (pi->pathname, MAIN_PROC_NAME_FMT, pid);
 #endif
