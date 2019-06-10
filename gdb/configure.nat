@@ -475,12 +475,12 @@ case ${gdb_host} in
 	    i386)
 		# Host: Solaris x86_64
 		NATDEPFILES="${NATDEPFILES} \
-		amd64-nat.o i386-sol2-nat.o"
+		sol2-core-regset.o amd64-nat.o i386-sol2-nat.o"
 		;;
 	    sparc)
 		# Host: Solaris SPARC & UltraSPARC
 		NAT_FILE='nm-sol2.h'
-		NATDEPFILES="${NATDEPFILES} sparc-sol2-nat.o"
+		NATDEPFILES="${NATDEPFILES} sol2-core-regset.o sparc-sol2-nat.o"
 		;;
 	esac
 	;;

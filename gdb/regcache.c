@@ -194,6 +194,8 @@ reg_buffer::reg_buffer (gdbarch *gdbarch, bool has_pseudo)
       m_register_status.reset
 	(new register_status[gdbarch_num_regs (gdbarch)] ());
     }
+
+  m_from_corefile = false;
 }
 
 regcache::regcache (gdbarch *gdbarch, const address_space *aspace_)
@@ -1257,6 +1259,18 @@ regcache::debug_print_register (const char *func,  int regno)
 	}
     }
   fprintf_unfiltered (gdb_stdlog, "\n");
+}
+
+void
+reg_buffer::set_from_corefile(bool b)
+{
+  m_from_corefile = b;
+}
+
+bool
+reg_buffer::from_corefile(void)
+{
+  return (m_from_corefile);
 }
 
 static void

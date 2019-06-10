@@ -231,6 +231,9 @@ public:
   /* See common/common-regcache.h.  */
   bool raw_compare (int regnum, const void *buf, int offset) const override;
 
+  void set_from_corefile(bool);
+  bool from_corefile(void);
+	
 protected:
   /* Assert on the range of REGNUM.  */
   void assert_regnum (int regnum) const;
@@ -252,6 +255,9 @@ protected:
   /* Register cache status.  */
   std::unique_ptr<register_status[]> m_register_status;
 
+  // Is this a corefile regcache or a live process  
+  bool m_from_corefile;	
+	
   friend class regcache;
   friend class detached_regcache;
 };

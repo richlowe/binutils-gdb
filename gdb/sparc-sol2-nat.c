@@ -24,12 +24,9 @@
 #include "gregset.h"
 
 #include "sparc-tdep.h"
+#include "sparc64-tdep.h"
 #include "target.h"
 #include "procfs.h"
-
-/* This file provids the (temporary) glue between the Solaris SPARC
-   target dependent code and the machine independent SVR4 /proc
-   support.  */
 
 /* Solaris 7 (Solaris 2.7, SunOS 5.7) and up support two process data
    models, the traditional 32-bit data model (ILP32) and the 64-bit
@@ -43,51 +40,65 @@
    Note that a 32-bit GDB won't be able to debug a 64-bit target
    process using /proc on Solaris.  */
 
-#if PR_MODEL_NATIVE == PR_MODEL_LP64
-
-#include "sparc64-tdep.h"
-
-#define sparc_supply_gregset sparc64_supply_gregset
-#define sparc_supply_fpregset sparc64_supply_fpregset
-#define sparc_collect_gregset sparc64_collect_gregset
-#define sparc_collect_fpregset sparc64_collect_fpregset
-
-#define sparc_sol2_gregmap sparc64_sol2_gregmap
-#define sparc_sol2_fpregmap sparc64_sol2_fpregmap
-
-#else
-
-#define sparc_supply_gregset sparc32_supply_gregset
-#define sparc_supply_fpregset sparc32_supply_fpregset
-#define sparc_collect_gregset sparc32_collect_gregset
-#define sparc_collect_fpregset sparc32_collect_fpregset
-
-#define sparc_sol2_gregmap sparc32_sol2_gregmap
-#define sparc_sol2_fpregmap sparc32_sol2_fpregmap
-
-#endif
+static int from_corefile = -1;
 
 void
 supply_gregset (struct regcache *regcache, const prgregset_t *gregs)
 {
-  sparc_supply_gregset (&sparc_sol2_gregmap, regcache, -1, gregs);
+  struct gdbarch *gdbarch = regcache->arch();
+  int pointer_size = gdbarch_ptr_bit (gdbarch);
+
+  if (from_corefile == -1)
+    from_corefile = regcache->from_corefile();
+
+  if ((pointer_size == 32) && (from_corefile == 1))
+    sparc32_supply_gregset (&sparc32_sol2_gregmap, regcache, -1, gregs);
+  else
+    sparc64_supply_gregset (&sparc64_sol2_gregmap, regcache, -1, gregs);
 }
 
 void
 supply_fpregset (struct regcache *regcache, const prfpregset_t *fpregs)
 {
-  sparc_supply_fpregset (&sparc_sol2_fpregmap, regcache, -1, fpregs);
+  struct gdbarch *gdbarch = regcache->arch();
+  int pointer_size = gdbarch_ptr_bit (gdbarch);
+
+  if (from_corefile == -1)
+    from_corefile = regcache->from_corefile();
+
+  if ((pointer_size == 32) && (from_corefile == 1))
+    sparc32_supply_fpregset (&sparc32_sol2_fpregmap, regcache, -1, fpregs);
+  else
+    sparc64_supply_fpregset (&sparc64_sol2_fpregmap, regcache, -1, fpregs);
 }
 
 void
 fill_gregset (const struct regcache *regcache, prgregset_t *gregs, int regnum)
 {
-  sparc_collect_gregset (&sparc_sol2_gregmap, regcache, regnum, gregs);
+  struct gdbarch *gdbarch = regcache->arch();
+  int pointer_size = gdbarch_ptr_bit (gdbarch);
+
+  if (from_corefile == -1)
+    from_corefile = regcache->from_corefile();
+
+  if ((pointer_size == 32) && (from_corefile == 1))
+    sparc32_collect_gregset (&sparc32_sol2_gregmap, regcache, regnum, gregs);
+  else
+    sparc64_collect_gregset (&sparc64_sol2_gregmap, regcache, regnum, gregs);
 }
 
 void
 fill_fpregset (const struct regcache *regcache,
 	       prfpregset_t *fpregs, int regnum)
 {
-  sparc_collect_fpregset (&sparc_sol2_fpregmap, regcache, regnum, fpregs);
+  struct gdbarch *gdbarch = regcache->arch();
+  int pointer_size = gdbarch_ptr_bit (gdbarch);
+
+  if (from_corefile == -1)
+    from_corefile = regcache->from_corefile();
+
+  if ((pointer_size == 32) && (from_corefile == 1))
+    sparc32_collect_fpregset (&sparc32_sol2_fpregmap, regcache, regnum, fpregs);
+  else
+    sparc64_collect_fpregset (&sparc64_sol2_fpregmap, regcache, regnum, fpregs);
 }
