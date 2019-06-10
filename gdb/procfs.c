@@ -234,7 +234,7 @@ enum { READ_WATCHFLAG  = WA_READ,
 #define AS_PROC_NAME_FMT     "/proc/%d/as"
 #define MAP_PROC_NAME_FMT    "/proc/%d/map"
 #define STATUS_PROC_NAME_FMT "/proc/%d/status"
-#define MAX_PROC_NAME_SIZE sizeof("/proc/999999/lwp/0123456789/lwpstatus")
+#define MAX_PROC_NAME_SIZE PATH_MAX
 
 typedef struct procinfo {
   struct procinfo *next;
