@@ -51,8 +51,10 @@ SYSCALLS_INSTALL_DIR = $(DESTDIR)$(GDB_DATADIR)/$(SYSCALLS_DIR)
 GEN_SYSCALLS_FILES = \
 	aarch64-linux.xml \
 	amd64-linux.xml \
+	amd64-solaris.xml \
 	arm-linux.xml \
 	i386-linux.xml \
+	i386-solaris.xml \
 	mips-n32-linux.xml \
 	mips-n64-linux.xml \
 	mips-o32-linux.xml \
@@ -61,7 +63,9 @@ GEN_SYSCALLS_FILES = \
 	s390-linux.xml \
 	s390x-linux.xml \
 	sparc-linux.xml \
-	sparc64-linux.xml
+	sparc-solaris.xml \
+	sparc64-linux.xml \
+	sparc64-solaris.xml
 
 SYSCALLS_FILES = gdb-syscalls.dtd freebsd.xml $(GEN_SYSCALLS_FILES)
 
