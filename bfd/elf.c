@@ -9093,7 +9093,10 @@ elfcore_make_note_pseudosection (bfd *abfd,
 static bfd_boolean
 elfcore_grok_prfpreg (bfd *abfd, Elf_Internal_Note *note)
 {
-  return elfcore_make_note_pseudosection (abfd, ".reg2", note);
+  asection *sect = bfd_get_section_by_name (abfd, ".reg2");
+  if (sect == NULL)
+    return elfcore_make_note_pseudosection (abfd, ".reg2", note);
+  return TRUE;
 }
 
 /* Linux dumps the Intel SSE regs in a note named "LINUX" with a note
@@ -9558,6 +9561,9 @@ elfcore_grok_note (bfd *abfd, Elf_Internal_Note *note)
 
 #if defined (HAVE_LWPSTATUS_T)
     case NT_LWPSTATUS:
+      if (bed->elf_backend_grok_lwpstatus)
+	if ((*bed->elf_backend_grok_lwpstatus) (abfd, note))
+	  return TRUE;
       return elfcore_grok_lwpstatus (abfd, note);
 #endif
 
@@ -10076,6 +10082,318 @@ elfcore_grok_openbsd_procinfo (bfd *abfd, Elf_Internal_Note *note)
     = _bfd_elfcore_strndup (abfd, note->descdata + 0x48, 31);
 
   return TRUE;
+}
+
+#include <sys/types.h>
+#include <sys/elf.h>
+#include <sys/procfs.h>
+#include <sys/regset.h>
+#include <sys/auxv.h>
+
+static bfd_boolean
+elfcore_grok_solaris_note (bfd *abfd, Elf_Internal_Note *note)
+{
+  asection *sect;
+  size_t fpregset_size;
+  size_t prgregset_size;
+  size_t prgregset_offset;
+  char reg2_section_name[16];
+
+#ifdef DEBUG
+  static const char* note_type[] = { "NONE (0)", "NT_PRSTATUS", "NT_PRFPREG",
+    "NT_PRPSINFO", "NT_PRXREG", "NT_PLATFORM", "NT_AUXV", "NT_GWINDOWS",
+    "NT_ASRS", "NT_LDT", "NT_PSTATUS", "INVALID (11)", "INVALID (12)",
+    "NT_PSINFO", "NT_PRCRED", "NT_UTSNAME", "NT_LWPSTATUS", "NT_LWPSINFO",
+    "NT_PRPRIV", "NT_PRPRIVINFO", "NT_CONTENT", "NT_ZONENAME",
+    "NT_PRCPUXREG", NULL };
+#endif
+
+  if (note == NULL)
+    return TRUE;
+
+  sect = bfd_get_section_by_name (abfd, reg2_section_name);
+
+  /* core files are identified as 32- or 64-bit, SPARC or x86,
+     by the size of the descsz which matches the sizeof()
+     the type appropriate for that note type (e.g., prstatus_t for 
+     SOLARIS_NT_PRSTATUS) for the corresponding architecture 
+     on Solaris. The core file bitness may differ from the bitness of 
+     gdb itself, so fixed values are used instead of sizeof(). 
+     Appropriate fixed offsets are also used to obtain data from
+     the note */
+	   
+  switch ((int) note->type)
+  {
+    case SOLARIS_NT_PRSTATUS:
+      if (note->descsz == 508) /* sizeof(prstatus_t) SPARC 32-bit */
+      {
+        prgregset_size = 152; /* sizeof(prgregset_t) SPARC 32-bit */
+        prgregset_offset = 356; /* offsetof(prstatus_t, pr_reg) */
+
+        elf_tdata (abfd)->core->signal =
+          bfd_get_16 (abfd, note->descdata + 136);
+        elf_tdata (abfd)->core->pid =
+          bfd_get_32 (abfd, note->descdata + 216);
+        elf_tdata (abfd)->core->lwpid =
+          bfd_get_32 (abfd, note->descdata + 308);
+        (void) snprintf (reg2_section_name, 16, "%s/%i", ".reg2",
+            *(int*)(note->descdata + 308));
+      }
+      else if (note->descsz == 904) /* sizeof(prstatus_t) SPARC 64-bit */
+      {
+        prgregset_size = 304; /* sizeof(prgregset_t) SPARC 64-bit */
+        prgregset_offset = 600; /* offsetof(prstatus_t, pr_reg) */
+
+        elf_tdata (abfd)->core->signal =
+          bfd_get_16 (abfd, note->descdata + 264);
+        elf_tdata (abfd)->core->pid =
+          bfd_get_32 (abfd, note->descdata + 360);
+        elf_tdata (abfd)->core->lwpid =
+          bfd_get_32 (abfd, note->descdata + 520);
+        (void) snprintf (reg2_section_name, 16, "%s/%i", ".reg2",
+            *(int*)(note->descdata + 520));
+      }
+      else if (note->descsz == 432) /* sizeof(prstatus_t) Intel 32-bit */
+      {
+        prgregset_size = 76; /* sizeof(prgregset_t) Intel 32-bit */
+        prgregset_offset = 356; /* offsetof(prstatus_t, pr_reg) */
+
+        elf_tdata (abfd)->core->signal =
+          bfd_get_16 (abfd, note->descdata + 136);
+        elf_tdata (abfd)->core->pid =
+          bfd_get_32 (abfd, note->descdata + 216);
+        elf_tdata (abfd)->core->lwpid =
+          bfd_get_32 (abfd, note->descdata + 308);
+        (void) snprintf (reg2_section_name, 16, "%s/%i", ".reg2",
+            *(int*)(note->descdata + 308));
+      }
+      else if (note->descsz == 824) /* sizeof(prstatus_t) Intel 64-bit */
+      {
+        prgregset_size = 224; /* sizeof(prgregset_t) Intel 64-bit */
+        prgregset_offset = 600; /* offsetof(prstatus_t, pr_reg) */
+
+        elf_tdata (abfd)->core->signal =
+          bfd_get_16 (abfd, note->descdata + 264);
+        elf_tdata (abfd)->core->pid =
+          bfd_get_32 (abfd, note->descdata + 360);
+        elf_tdata (abfd)->core->lwpid =
+          bfd_get_32 (abfd, note->descdata + 520);
+        (void) snprintf (reg2_section_name, 16, "%s/%i", ".reg2",
+            *(int*)(note->descdata + 520));
+      }
+
+      sect = bfd_get_section_by_name (abfd, ".reg");
+
+      if (sect != NULL)
+        sect->size = prgregset_size;
+
+      return _bfd_elfcore_make_pseudosection (abfd, ".reg",
+          prgregset_size, note->descpos + prgregset_offset);
+      break;
+    case SOLARIS_NT_PRFPREG:
+      break;
+    case SOLARIS_NT_PRPSINFO:
+      if (note->descsz == 260) /* sizeof(prpsinfo_t) */
+      {
+          /* offsetof(prpsinfo, pr_fname) */
+        elf_tdata (abfd)->core->program
+          = _bfd_elfcore_strndup (abfd, note->descdata + 84, 16);
+          /* offsetof(prpsinfo, pr_psargs) */
+        elf_tdata (abfd)->core->command
+          = _bfd_elfcore_strndup (abfd, note->descdata + 100, 80);
+      }
+      break;
+    case SOLARIS_NT_PRXREG:
+    case SOLARIS_NT_PLATFORM:
+    case SOLARIS_NT_GWINDOWS:
+    case SOLARIS_NT_ASRS:
+    case SOLARIS_NT_LDT:
+    case SOLARIS_NT_PSTATUS:
+      break;
+    case SOLARIS_NT_PSINFO:
+      if (note->descsz == 336) /* sizeof(psinfo_t) SPARC */
+      {
+          /* offsetof(psinfo_t, pr_fname) */
+        elf_tdata (abfd)->core->program
+          = _bfd_elfcore_strndup (abfd, note->descdata + 88, 16);
+          /* offsetof(psinfo_t, pr_psargs) */
+        elf_tdata (abfd)->core->command
+          = _bfd_elfcore_strndup (abfd, note->descdata + 104, 80);
+      }
+      else if (note->descsz == 360) /* sizeof(psinfo_t) Intel */
+      {
+          /* offsetof(psinfo_t, pr_fname) */
+        elf_tdata (abfd)->core->program
+          = _bfd_elfcore_strndup (abfd, note->descdata + 88, 16);
+          /* offsetof(psinfo_t, pr_psargs) */
+        elf_tdata (abfd)->core->command
+          = _bfd_elfcore_strndup (abfd, note->descdata + 104, 80);
+      }
+      break;
+    case SOLARIS_NT_PRCRED:
+    case SOLARIS_NT_UTSNAME:
+      break;
+    case SOLARIS_NT_LWPSTATUS:
+          /* offsetof(lwpstatus_t, pr_lwpid */
+        elf_tdata (abfd)->core->lwpid =
+          bfd_get_32 (abfd, note->descdata + 4);
+          /* offsetof(lwpstatus_t, pr_cursig */
+        elf_tdata (abfd)->core->signal =
+          bfd_get_16 (abfd, note->descdata + 12);
+        (void) snprintf (reg2_section_name, 16, "%s/%i", ".reg2",
+            *(int*)(note->descdata + 4));
+
+        if (note->descsz == 896) /* sizeof(lwpstatus_t) SPARC 32-bit */
+        {
+          fpregset_size = 400;  /* sizeof(fpregset_t) SPARC 32-bit */
+          prgregset_size = 152; /* sizeof(prgregset_t) SPARC 32-bit */
+
+          sect = bfd_get_section_by_name (abfd, ".reg");
+          if (sect != NULL)
+            sect->size = sizeof(prgregset_t);
+          else
+          {
+            if ((_bfd_elfcore_make_pseudosection (abfd, ".reg",
+                    prgregset_size,
+                    note->descpos + 344)) != TRUE)
+              return FALSE;
+          }
+          sect = bfd_get_section_by_name (abfd, reg2_section_name);
+
+          if (sect != NULL)
+          {
+            sect->size = fpregset_size;
+            sect->filepos = note->descpos + 496;
+            sect->alignment_power = 2;
+            return TRUE;
+          }
+          else
+            return _bfd_elfcore_make_pseudosection (abfd, reg2_section_name,
+                fpregset_size, note->descpos + 496);
+        }
+        else if (note->descsz == 1392) /* sizeof(lwpstatus_t) SPARC 64-bit */
+        {
+          fpregset_size = 544;  /* sizeof(fpregset_t) SPARC 64-bit */
+          prgregset_size = 304; /* sizeof(prgregset_t) SPARC 64-bit */
+
+          sect = bfd_get_section_by_name (abfd, ".reg");
+          if (sect != NULL)
+            sect->size = sizeof(prgregset_t);
+          else
+          {
+            if ((_bfd_elfcore_make_pseudosection (abfd, ".reg",
+                    prgregset_size,
+                    note->descpos + 544)) != TRUE)
+              return FALSE;
+          }
+          sect = bfd_get_section_by_name (abfd, reg2_section_name);
+
+          if (sect != NULL)
+          {
+            sect->size = fpregset_size;
+            sect->filepos = note->descpos + 848;
+            sect->alignment_power = 2;
+            return TRUE;
+          }
+          else
+            return _bfd_elfcore_make_pseudosection (abfd, reg2_section_name,
+                fpregset_size, note->descpos + 848);
+        }
+        else if (note->descsz == 800) /* sizeof(lwpstatus_t) Intel 32-bit */
+        {
+          fpregset_size = 380;  /* sizeof(fpregset_t) Intel 32-bit */	
+          prgregset_size = 76;  /* sizeof(prgregset_t) Intel 32-bit */
+
+          sect = bfd_get_section_by_name (abfd, ".reg");
+          if (sect != NULL)
+            sect->size = prgregset_size;
+          else
+          {
+            if ((_bfd_elfcore_make_pseudosection (abfd, ".reg",
+                    prgregset_size,
+                    note->descpos + 344)) != TRUE)
+              return FALSE;
+          }
+          sect = bfd_get_section_by_name (abfd, reg2_section_name);
+
+          if (sect != NULL)
+          {
+            sect->size = fpregset_size;
+            sect->filepos = note->descpos + 420;
+            sect->alignment_power = 2;
+            return TRUE;
+          }
+          else
+            return _bfd_elfcore_make_pseudosection (abfd, reg2_section_name,
+                fpregset_size, note->descpos + 420);
+        }
+        else if (note->descsz == 1296) /* sizeof(lwpstatus_t) Intel 64-bit */
+        {
+          fpregset_size = 528; /* sizeof(fpregset_t) Intel 64-bit */
+          prgregset_size = 224; /* sizeof(prgregset_t) Intel 64-bit */
+
+          sect = bfd_get_section_by_name (abfd, ".reg");
+          if (sect != NULL)
+            sect->size = prgregset_size;
+          else
+          {
+            if ((_bfd_elfcore_make_pseudosection (abfd, ".reg",
+                    prgregset_size,
+                    note->descpos + 544)) != TRUE)
+              return FALSE;
+          }
+          sect = bfd_get_section_by_name (abfd, reg2_section_name);
+
+          if (sect != NULL)
+          {
+            sect->size = fpregset_size;
+            sect->filepos = note->descpos + 768;
+            sect->alignment_power = 2;
+            return TRUE;
+          }
+          else
+            return _bfd_elfcore_make_pseudosection (abfd, reg2_section_name,
+                fpregset_size, note->descpos + 768);
+        }
+      break;
+    case SOLARIS_NT_LWPSINFO:
+        if (note->descsz == 128) /* sizeof(lwpsinfo_t) Intel and SPARC */
+        {
+          elf_tdata (abfd)->core->lwpid =
+            bfd_get_32 (abfd, note->descdata + 4);
+        }
+        break;
+    case SOLARIS_NT_PRPRIV:
+    case SOLARIS_NT_PRPRIVINFO:
+    case SOLARIS_NT_CONTENT:
+    case SOLARIS_NT_ZONENAME:
+    case SOLARIS_NT_PRCPUXREG:
+    case SOLARIS_NT_AUXV:
+      break;
+    default:
+      break;
+  }
+
+  /* add support for .auxv sections */
+  sect = bfd_get_section_by_name (abfd, ".auxv");
+  return TRUE;
+}
+
+/* 
+ * for name starting with "CORE" this may be either a Solaris
+ * core file or a gdb-generated core file.  Do Solaris-specific 
+ * processing on selected note types first with
+ * elfcore_grok_solaris_note(), then process the note
+ * in elfcore_grok_note().
+ */
+static bfd_boolean
+call_elfcore_grok_solaris_note (bfd *abfd, Elf_Internal_Note *note)
+{
+  if (! elfcore_grok_solaris_note (abfd, note)) {
+    return FALSE;
+  } else {
+    return elfcore_grok_note (abfd, note);
+  }
 }
 
 static bfd_boolean
@@ -10878,7 +11196,10 @@ elf_parse_notes (bfd *abfd, char *buf, size_t size, file_ptr offset)
 	      GROKER_ELEMENT ("NetBSD-CORE", elfcore_grok_netbsd_note),
 	      GROKER_ELEMENT ( "OpenBSD", elfcore_grok_openbsd_note),
 	      GROKER_ELEMENT ("QNX", elfcore_grok_nto_note),
-	      GROKER_ELEMENT ("SPU/", elfcore_grok_spu_note)
+	      GROKER_ELEMENT ("SPU/", elfcore_grok_spu_note),
+#if defined(__sun) || defined(__SVR4)
+	      GROKER_ELEMENT ("CORE", call_elfcore_grok_solaris_note)
+#endif
 	    };
 #undef GROKER_ELEMENT
 	    int i;
