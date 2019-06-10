@@ -213,6 +213,8 @@ struct regcache
   /* If this is a read-write cache, which thread's registers is
      it connected to?  */
   ptid_t ptid;
+  /* Is this a corefile regcache or a live process */
+  int from_corefile;
 };
 
 /* See regcache.h.  */
@@ -237,6 +239,7 @@ regcache_xmalloc_1 (struct gdbarch *gdbarch, struct address_space *aspace,
   regcache = XNEW (struct regcache);
   regcache->descr = descr;
   regcache->readonly_p = readonly_p;
+  regcache->from_corefile = 0;
   if (readonly_p)
     {
       regcache->registers
@@ -1620,3 +1623,18 @@ Takes an optional file parameter."),
 	   &maintenanceprintlist);
 
 }
+
+int
+set_regcache_from_corefile (struct regcache *regcache)
+{
+  gdb_assert (regcache != NULL);
+  regcache->from_corefile = 1;
+}
+
+int
+regcache_from_corefile (const struct regcache *regcache)
+{
+  gdb_assert (regcache != NULL);
+  return regcache->from_corefile;
+}
+

@@ -242,4 +242,7 @@ extern void regcache_debug_print_register (const char *func,
 					   struct regcache *regcache,
 					   int regno);
 
+extern int set_regcache_from_corefile (struct regcache *regcache);
+extern int regcache_from_corefile (const struct regcache *regcache);
+
 #endif /* REGCACHE_H */
