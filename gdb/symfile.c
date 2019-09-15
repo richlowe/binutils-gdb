@@ -1567,27 +1567,27 @@ find_separate_debug_file_by_debuglink (struct objfile *objfile)
       /* For PR gdb/9538, try again with realpath (if different from the
 	 original).  */
 
-      struct stat st_buf;
+      /*
+       * Stock gdb only resolves the pathname if the _file_ is a symbolic
+       * link, we need to resolve if there is a symbolic link anywhere along
+       * the directory path.
+       */
 
-      if (lstat (objfile_name (objfile), &st_buf) == 0
-	  && S_ISLNK (st_buf.st_mode))
-	{
-	  gdb::unique_xmalloc_ptr<char> symlink_dir
-	    (lrealpath (objfile_name (objfile)));
-	  if (symlink_dir != NULL)
-	    {
-	      terminate_after_last_dir_separator (symlink_dir.get ());
-	      if (dir != symlink_dir.get ())
-		{
-		  /* Different directory, so try using it.  */
-		  debugfile = find_separate_debug_file (symlink_dir.get (),
-							symlink_dir.get (),
-							debuglink.get (),
-							crc32,
-							objfile);
-		}
-	    }
-	}
+      gdb::unique_xmalloc_ptr<char> symlink_dir
+	  (lrealpath (objfile_name (objfile)));
+      if (symlink_dir != NULL)
+	      {
+		terminate_after_last_dir_separator (symlink_dir.get ());
+		if (dir != symlink_dir.get ())
+		  {
+		    /* Different directory, so try using it.  */
+		    debugfile = find_separate_debug_file (symlink_dir.get (),
+							  symlink_dir.get (),
+							  debuglink.get (),
+							  crc32,
+							  objfile);
+		  }
+	      }
     }
 
   return debugfile;
@@ -3597,7 +3597,7 @@ simple_overlay_update (struct obj_section *osect)
 	  error (_("Error reading inferior's overlay table: couldn't "
 		   "find `_ovly_table' array\n"
 		   "in inferior.  Use `overlay manual' mode."));
-	
+
 	if (cache_ovly_table_base == BMSYMBOL_VALUE_ADDRESS (minsym))
 	  /* Then go ahead and try to look up this single section in
 	     the cache.  */
