@@ -503,11 +503,6 @@ case ${gdb_host} in
 		NAT_FILE='nm-sol2.h'
 		NATDEPFILES="${NATDEPFILES} aarch64-sol2-nat.o"
 		;;
-	    riscv*)
-		# Host: Solaris RISC-V
-		NAT_FILE='nm-sol2.h'
-		NATDEPFILES="${NATDEPFILES} riscv-sol2-nat.o"
-		;;
 	esac
 	;;
 esac

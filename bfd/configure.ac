@@ -924,9 +924,6 @@ changequote([,])dnl
   ns32k-*-netbsd* | ns32k-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
-  riscv64-*-solaris*)
-	COREFILE=''
-	;;
   rs6000-*-lynx*)
 	COREFILE=lynx-core.lo
 	;;

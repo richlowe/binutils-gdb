@@ -541,12 +541,6 @@ riscv*-*-linux*)
  			linux-tdep.o solib-svr4.o symfile-mem.o linux-record.o"
 	;;
 
-riscv*-*-solaris2.1[0-9]*)
-	# Target: RISC-V Solaris
-	gdb_target_obs="riscv-sol2-tdep.o \
-			sol2-tdep.o solib-svr4.o"
-	;;
-
 riscv*-*-*)
 	# Target: RISC-V architecture
 	gdb_target_obs=""

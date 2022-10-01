@@ -4355,7 +4355,7 @@ _bfd_riscv_relax_lui (bfd *abfd,
     }
 
   /* Can we relax LUI to C.LUI?  Alignment might move the section forward;
-     account for this assuming page alignment at worst. In the presence of 
+     account for this assuming page alignment at worst. In the presence of
      RELRO segment the linker aligns it by one page size, therefore sections
      after the segment can be moved more than one page. */
 
@@ -5169,15 +5169,8 @@ riscv_elf_additional_program_headers (bfd *abfd,
   if (bfd_get_section_by_name (abfd, RISCV_ATTRIBUTES_SECTION_NAME))
     ++ret;
 
-  /* Check to see if we need a large readonly segment.  */
-  asection *s = bfd_get_section_by_name (abfd, ".dtrace_data");
-  if (s && (s->flags & SEC_LOAD))
-    ++ret;
-
   return ret;
 }
-
-#define	PT_SUNWDTRACE	0x6ffffffc
 
 static bool
 riscv_elf_modify_segment_map (bfd *abfd,
@@ -5220,26 +5213,6 @@ riscv_elf_modify_segment_map (bfd *abfd,
 	}
     }
 
-  asection *sec = bfd_get_section_by_name (abfd, ".dtrace_data");
-  if (sec != NULL && (sec->flags & SEC_LOAD) != 0)
-    {
-      m = elf_seg_map (abfd);
-      while (m && m->p_type != PT_SUNWDTRACE)
-	  m = m->next;
-
-      if (!m)
-	{
-	  m = (struct elf_segment_map *) bfd_zalloc(abfd, sizeof (struct elf_segment_map));
-	  if (m == NULL)
-		  return false;
-	  m->p_type = PT_SUNWDTRACE;
-	  m->count = 1;
-	  m->sections[0] = sec;
-	  m->next = elf_seg_map (abfd);
-	  elf_seg_map (abfd) = m;
-	}
-    }
-
   return true;
 }
 
@@ -5264,13 +5237,6 @@ riscv_elf_merge_symbol_attribute (struct elf_link_hash_entry *h,
   if (isym_sto & STO_RISCV_VARIANT_CC)
     h->other |= STO_RISCV_VARIANT_CC;
 }
-
-static const struct bfd_elf_special_section
-  riscv_elf_special_sections[]=
-{
-  { STRING_COMMA_LEN (".dtrace_data"),	    0, SHT_PROGBITS, SHF_ALLOC + SHF_WRITE + SHF_EXECINSTR},
-  { NULL,	                0,          0, 0,            0 }
-};
 
 #define TARGET_LITTLE_SYM			riscv_elfNN_vec
 #define TARGET_LITTLE_NAME			"elfNN-littleriscv"
@@ -5311,8 +5277,6 @@ static const struct bfd_elf_special_section
 #define elf_backend_merge_symbol_attribute	riscv_elf_merge_symbol_attribute
 
 #define elf_backend_init_index_section		_bfd_elf_init_1_index_section
-
-#define elf_backend_special_sections		riscv_elf_special_sections
 
 #define elf_backend_can_gc_sections		1
 #define elf_backend_can_refcount		1
