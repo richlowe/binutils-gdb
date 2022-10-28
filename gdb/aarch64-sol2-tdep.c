@@ -233,6 +233,9 @@ aarch64_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   frame_unwind_append_unwinder (gdbarch, &aarch64_sol2_sigtramp_frame_unwind);
   sol2_init_abi (info, gdbarch);
 
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, aarch64_sol2_iterate_over_regset_sections);
+
   /* Solaris has SVR4-style shared libraries...  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
   set_solib_svr4_fetch_link_map_offsets (gdbarch, svr4_lp64_fetch_link_map_offsets);
@@ -245,8 +248,9 @@ aarch64_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 /* Provide a prototype to silence -Wmissing-prototypes.  */
 extern initialize_file_ftype _initialize_aarch64_sol2_tdep;
 
+void _initialize_aarch64_sol2_tdep();
 void
-_initialize_aarch64_sol2_tdep (void)
+_initialize_aarch64_sol2_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_aarch64, 0, GDB_OSABI_SOLARIS,
 			  aarch64_sol2_init_abi);
