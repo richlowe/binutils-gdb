@@ -6483,7 +6483,7 @@ assign_file_positions_except_relocs (bfd *abfd,
 				    abfd);
 	    }
 	}
-      
+
       if (bfd_seek (abfd, i_ehdrp->e_phoff, SEEK_SET) != 0
 	  || bed->s->write_out_phdrs (abfd, tdata->phdr, alloc) != 0)
 	return false;
@@ -9436,7 +9436,7 @@ _bfd_elf_set_section_contents (bfd *abfd,
 	  bfd_set_error (bfd_error_invalid_operation);
 	  return false;
 	}
-      
+
       if ((offset + count) > hdr->sh_size)
 	{
 	  _bfd_error_handler
@@ -11342,6 +11342,9 @@ elfcore_grok_solaris_note_impl (bfd *abfd, Elf_Internal_Note *note)
 	case 824: /* sizeof(prstatus_t) Intel 64-bit */
 	  return elfcore_grok_solaris_prstatus(abfd, note,
 					       264, 360, 520, 224, 600);
+	case 888: /* sizeof(prstatus_t) AArch64 */
+		return elfcore_grok_solaris_prstatus(abfd, note,
+		    264, 360, 520, 288, 600);
 	default:
 	  return true;
 	}
@@ -11352,7 +11355,7 @@ elfcore_grok_solaris_note_impl (bfd *abfd, Elf_Internal_Note *note)
 	{
 	case 260: /* sizeof(prpsinfo_t) SPARC and Intel 32-bit */
 	  return elfcore_grok_solaris_info(abfd, note, 84, 100);
-	case 328: /* sizeof(prpsinfo_t) SPARC and Intel 64-bit */
+	case 328: /* sizeof(prpsinfo_t) SPARC and Intel 64-bit and AArch64 */
 	  return elfcore_grok_solaris_info(abfd, note, 120, 136);
 	case 360: /* sizeof(psinfo_t) SPARC and Intel 32-bit */
 	  return elfcore_grok_solaris_info(abfd, note, 88, 104);
@@ -11377,6 +11380,12 @@ elfcore_grok_solaris_note_impl (bfd *abfd, Elf_Internal_Note *note)
 	case 1296: /* sizeof(lwpstatus_t) Intel 64-bit */
 	  return elfcore_grok_solaris_lwpstatus(abfd, note,
 						224, 544, 528, 768);
+	case 1360: /* sizeof(lwpstatus-t) AArch64 */
+	  return elfcore_grok_solaris_lwpstatus(abfd, note,
+	      288,
+	      544,
+	      528,
+	      832);
 	default:
 	  return true;
 	}
@@ -13073,7 +13082,7 @@ _bfd_elf_maybe_function_sym (const asymbol *sym, asection *sec,
     return 0;
 
   size = (sym->flags & BSF_SYNTHETIC) ? 0 : elf_sym->internal_elf_sym.st_size;
-  
+
   /* In theory we should check that the symbol's type satisfies
      _bfd_elf_is_function_type(), but there are some function-like
      symbols which would fail this test.  (eg _start).  Instead
@@ -13085,7 +13094,7 @@ _bfd_elf_maybe_function_sym (const asymbol *sym, asection *sec,
       && ELF_ST_TYPE (elf_sym->internal_elf_sym.st_info) == STT_NOTYPE
       && ELF_ST_VISIBILITY (elf_sym->internal_elf_sym.st_other) == STV_HIDDEN)
     return 0;
-  
+
   *code_off = sym->value;
   /* Do not return 0 for the function's size.  */
   return size ? size : 1;
@@ -13136,7 +13145,7 @@ _bfd_elf_slurp_secondary_reloc_section (bfd *       abfd,
   else
 #endif
     r_sym = elf32_r_sym;
-  
+
   if (!elf_section_data (sec)->has_secondary_relocs)
     return true;
 
